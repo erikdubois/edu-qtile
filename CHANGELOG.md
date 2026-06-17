@@ -1,5 +1,30 @@
 # Changelog
 
+## 2026.06.11
+
+### What Changed
+- **Ported the config from X11 to a Wayland-native qtile session.** The repo was a byte-for-byte copy of the X11 `kiro-qtile`; on a `qtile-wayland` session none of the X11 pieces worked. This pass makes it Wayland-only (X11 code paths stripped, not gated).
+- **sxhkd keybindings migrated into `config.py`.** sxhkd does not run on Wayland, so every application / launcher / multimedia / screenshot binding that lived in `sxhkd/sxhkdrc` is now a native qtile `Key()` / `lazy.spawn()` binding. Window-management bindings were already native.
+- **X11-only tools swapped for Wayland equivalents:** screenshots `scrot`/`flameshot` → `grim` + `slurp`; brightness `xbacklight` → `brightnessctl`; wallpaper `feh`/`variety` → `swaybg`; compositor `picom` → dropped (qtile *is* the Wayland compositor).
+- **X11-only bindings dropped:** `xkill` (Super+Escape), the picom/fastcompmgr compositor toggles (Super+p / Super+g), the variety wallpaper-rotation + pywal keys, and the sxhkd reload key — none have a Wayland role.
+- **Keyboard layout** is now detected with `localectl` (was `setxkbmap`, X11-only) and applied to the session via `wl_input_rules` / `InputConfig(kb_layout=…)`.
+- **README** updated for the Wayland variant (title, deps, "qtile is the compositor" note).
+- Added `wayland-deps.sh` (repo root, not shipped to `/etc/skel`) — a test toggle to install/remove the Wayland-only runtime packages (`grim slurp swaybg brightnessctl python-dbus-fast`) so a Wayland session can be tried on a box and then reverted.
+- Out of scope this pass: regenerating the `keybindings.txt`/`.html`/`.pdf` cheatsheet.
+
+### Technical Details
+- `config.py`: removed `IS_WAYLAND`/`IS_X11` and the Systray branch (tray is always `widget.StatusNotifier`); replaced `detect_group_names()` (`setxkbmap -query`) with `detect_layout()` (`localectl status` → `X11 Layout:`) feeding both the AZERTY-vs-QWERTY group keysyms and `wl_input_rules`; added `from libqtile.backend.wayland import InputConfig`. Removed the X11 `startup` hook (`xsetroot`) and the `set_floating` hook (used the X11 Window API `get_wm_transient_for`/`get_wm_type`); qtile's `default_float_rules` + the existing `Match(...)` list in `floating_layout` cover floats cross-backend. Appended a `keys.extend([...])` block with the ported launcher/multimedia/screenshot bindings (grim/slurp shots via `bash -c`).
+- `scripts/autostart.sh`: removed the xrandr/arandr screen-layout block, the VirtualBox resolution line, `picom`, `numlockx`, `sxhkd`, and `variety`; wallpaper now via `swaybg -m fill`; tray/dbus applets (nm-applet, pamac-tray, xfce4-power-manager, blueberry-tray, xfce4-notifyd, polkit-gnome, volctl) kept (they run under XWayland / dbus).
+- Deleted `sxhkd/sxhkdrc`, `scripts/picom.conf`, `scripts/picom-toggle.sh`, `scripts/fastcompmgr-toggle.sh`, `scripts/set-screen-resolution-in-virtualbox.sh`.
+- Verified: `python -m py_compile config.py` OK, `ruff check` clean, `qtile check` reports the config as valid Python (the `StatusNotifier` line is a dependency warning — needs `python-dbus-fast` on the target — not a config error). Live Wayland-session boot to be confirmed by Erik (no Wayland tooling on the dev box).
+
+### Files Modified
+- `etc/skel/.config/qtile/config.py`
+- `etc/skel/.config/qtile/scripts/autostart.sh`
+- `README.md`
+- `wayland-deps.sh` (new)
+- Deleted: `etc/skel/.config/qtile/sxhkd/sxhkdrc`, `scripts/picom.conf`, `scripts/picom-toggle.sh`, `scripts/fastcompmgr-toggle.sh`, `scripts/set-screen-resolution-in-virtualbox.sh`
+
 ## 2026.06.08
 
 ### What Changed

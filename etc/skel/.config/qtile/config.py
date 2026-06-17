@@ -24,23 +24,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Kiro qtile config:
+# Kiro qtile config (Wayland):
 #   - Visual design (DoomOne colours, bar, widgets) follows the DTOS/CachyOS qtile.
-#   - Keybindings are authoritative from qtile-erik: window management lives here,
-#     application/multimedia/screenshot launchers live in sxhkd/sxhkdrc and are
-#     started by scripts/autostart.sh ("sxhkd to replace Qtile native key-bindings").
+#   - All keybindings are native qtile Key() bindings. sxhkd does not run on
+#     Wayland, so the application/multimedia/screenshot launchers that used to
+#     live in sxhkd/sxhkdrc are ported into the `keys` list below.
 
 import os
 import subprocess
 
 from libqtile import bar, hook, layout, qtile, widget
+from libqtile.backend.wayland import InputConfig
 from libqtile.config import Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
 import colors
-
-IS_WAYLAND = qtile.core.name == "wayland"
-IS_X11 = qtile.core.name == "x11"
 
 # mod4 or mod = super key
 mod = "mod4"
@@ -50,12 +48,17 @@ home = os.path.expanduser("~")
 
 myTerm = "alacritty"
 
-# ── Keybindings (authoritative: qtile-erik) ──────────────────────────────
-# Application launchers, multimedia and screenshot keys live in sxhkd/sxhkdrc.
-# Only window-management bindings are native to qtile, exactly as in qtile-erik.
+# Wayland screenshot helpers (grim + slurp; replace X11 scrot/flameshot).
+_shot_full = ('bash -c \'grim "$(xdg-user-dir PICTURES)/'
+              '$(date +%Y-%m-%d-%H%M%S)_screenshot.png"\'')
+_shot_region = ('bash -c \'grim -g "$(slurp)" "$(xdg-user-dir PICTURES)/'
+                '$(date +%Y-%m-%d-%H%M%S)_screenshot.png"\'')
+
+# ── Keybindings ───────────────────────────────────────────────────────────
+# Window-management bindings live in this list; the application / multimedia /
+# screenshot launchers are appended further down (ported from sxhkd).
 keys = [
 
-    # Most of our keybindings are in sxhkd file - except these
     # SUPER + FUNCTION KEYS
 
     Key([mod], "f", lazy.window.toggle_fullscreen()),
@@ -163,6 +166,101 @@ keys = [
     ]
 
 
+# ── Application / launcher / multimedia keys (ported from sxhkd) ───────────
+# sxhkd does not run on Wayland, so the bindings that used to live in
+# sxhkd/sxhkdrc are native qtile Key() bindings here. X11-only tools were
+# swapped for Wayland equivalents (grim/slurp screenshots, brightnessctl) and
+# the X11-only entries (xkill, picom/fastcompmgr toggles, variety wallpaper
+# rotation, sxhkd reload) were dropped.
+keys.extend([
+    # SUPER + FUNCTION KEYS
+    Key([mod], "F1", lazy.spawn("vivaldi-stable")),
+    Key([mod], "F2", lazy.spawn("code")),
+    Key([mod], "F3", lazy.spawn("inkscape")),
+    Key([mod], "F4", lazy.spawn("gimp")),
+    Key([mod], "F5", lazy.spawn("meld")),
+    Key([mod], "F6", lazy.spawn("vlc --video-on-top")),
+    Key([mod], "F7", lazy.spawn("virtualbox")),
+    Key([mod], "F8", lazy.spawn("thunar")),
+    Key([mod], "F9", lazy.spawn("virt-manager")),
+    Key([mod], "F10", lazy.spawn("spotify")),
+    Key([mod], "F11", lazy.spawn("rofi -theme-str 'window {width: 100%;height: 100%;}' -show drun")),
+    Key([mod], "F12", lazy.spawn("rofi -show drun")),
+
+    # SUPER + KEYS
+    Key([mod, "control"], "s", lazy.spawn("kiro-keybindings")),
+    Key([mod], "e", lazy.spawn("code")),
+    Key([mod], "x", lazy.spawn("archlinux-logout")),
+    Key([mod, "shift"], "x", lazy.spawn("edu-powermenu")),
+    Key([mod], "r", lazy.spawn(
+        "rofi -no-config -no-lazy-grab -show drun -modi drun "
+        f"-theme {home}/.config/qtile/rofi/launcher2.rasi")),
+    Key([mod], "d", lazy.spawn(
+        "rofi -no-config -no-lazy-grab -show drun -modi drun "
+        f"-theme {home}/.config/qtile/rofi/launcher2.rasi")),
+    Key([mod], "v", lazy.spawn("pavucontrol")),
+    Key([mod], "t", lazy.spawn(myTerm)),
+    Key([mod], "Return", lazy.spawn(myTerm)),
+    Key([mod], "KP_Enter", lazy.spawn(myTerm)),
+    Key([mod, "shift"], "Return", lazy.spawn("thunar")),
+    Key([mod, "shift"], "d", lazy.spawn(
+        "dmenu_run -i -nb '#191919' -nf '#fea63c' -sb '#fea63c' -sf '#191919' "
+        "-fn 'NotoMonoRegular:bold:pixelsize=14'")),
+
+    # CONTROL + ALT KEYS
+    Key(["control", "mod1"], "e", lazy.spawn("archlinux-tweak-tool")),
+    Key(["control", "mod1"], "d", lazy.spawn("obs")),
+    Key(["control", "mod1"], "q", lazy.spawn("alacritty-tweak-tool")),
+    Key(["control", "mod1"], "o", lazy.spawn("opera")),
+    Key(["control", "mod1"], "comma", lazy.spawn("mintstick -m iso")),
+    Key(["control", "mod1"], "End", lazy.spawn(myTerm + " -e btop")),
+    Key(["control", "mod1"], "b", lazy.spawn("brave --password-store=basic")),
+    Key(["control", "mod1"], "c", lazy.spawn("chromium -no-default-browser-check")),
+    Key(["control", "mod1"], "g", lazy.spawn("chromium -no-default-browser-check")),
+    Key(["control", "mod1"], "i", lazy.spawn("kiro-iso-builder")),
+    Key(["control", "mod1"], "f", lazy.spawn("firefox")),
+    Key(["control", "mod1"], "k", lazy.spawn("archlinux-logout")),
+    Key(["control", "mod1"], "l", lazy.spawn("archlinux-logout")),
+    Key(["control", "mod1"], "p", lazy.spawn("pamac-manager")),
+    Key(["control", "mod1"], "m", lazy.spawn("mintstick -m iso")),
+    Key(["control", "mod1"], "u", lazy.spawn("pavucontrol")),
+    Key(["control", "mod1"], "s", lazy.spawn("spotify")),
+    Key(["control", "mod1"], "Return", lazy.spawn(myTerm)),
+    Key(["control", "mod1"], "t", lazy.spawn(myTerm)),
+    Key(["control", "mod1"], "v", lazy.spawn("vivaldi-stable")),
+    Key(["control", "mod1"], "a", lazy.spawn("alacritty-tweak-tool")),
+
+    # ALT + KEYS
+    Key(["mod1"], "r", lazy.spawn("rofi-theme-selector")),
+    Key(["mod1"], "F2", lazy.spawn("xfce4-appfinder --collapsed")),
+    Key(["mod1"], "F3", lazy.spawn("xfce4-appfinder")),
+
+    # CONTROL + SHIFT KEYS
+    Key(["control", "shift"], "Escape", lazy.spawn("xfce4-taskmanager")),
+
+    # SCREENSHOTS (grim + slurp)
+    Key([], "Print", lazy.spawn(_shot_full)),
+    Key(["control"], "Print", lazy.spawn(_shot_region)),
+    Key(["control", "shift"], "Print", lazy.spawn(_shot_region)),
+    Key(["control", mod], "Print", lazy.spawn(_shot_region)),
+
+    # MULTIMEDIA KEYS
+    Key([], "XF86AudioRaiseVolume", lazy.spawn("amixer set Master 10%+")),
+    Key([], "XF86AudioLowerVolume", lazy.spawn("amixer set Master 10%-")),
+    Key([], "XF86AudioMute", lazy.spawn("amixer -D pulse set Master 1+ toggle")),
+    Key([], "XF86AudioPlay", lazy.spawn("playerctl play-pause")),
+    Key([], "XF86AudioNext", lazy.spawn("playerctl next")),
+    Key([], "XF86AudioPrev", lazy.spawn("playerctl previous")),
+    Key([], "XF86AudioStop", lazy.spawn("playerctl stop")),
+    Key([], "XF86MonBrightnessUp", lazy.spawn("brightnessctl set +10%")),
+    Key([], "XF86MonBrightnessDown", lazy.spawn("brightnessctl set 10%-")),
+
+    # SYSTEM UPDATE
+    Key(["control", "mod1", "shift"], "F1", lazy.spawn("update-system")),
+    Key([mod, "control", "shift"], "F1", lazy.spawn("update-system")),
+])
+
+
 def window_to_previous_screen(qtile, switch_group=False, switch_screen=False):
     i = qtile.screens.index(qtile.current_screen)
     if i != 0:
@@ -214,8 +312,24 @@ def drag_window(qtile, x, y):
 # ── Groups (qtile-erik bindings, DoomOne circle labels from DTOS) ─────────
 groups = []
 
-def detect_group_names():
-    """Return group names matching the active keyboard layout.
+def detect_layout():
+    """Return the configured keyboard layout code (e.g. 'be', 'us').
+
+    Wayland has no setxkbmap; localectl is the systemd-native, backend-agnostic
+    source. Falls back to 'us' on any error.
+    """
+    try:
+        out = subprocess.check_output(["localectl", "status"], text=True)
+        for line in out.splitlines():
+            if "X11 Layout:" in line:
+                return line.split(":", 1)[1].strip().split(",")[0]
+    except Exception:
+        pass
+    return "us"
+
+
+def group_names_for(layout_code):
+    """Group names matching the keyboard layout.
 
     Belgian AZERTY ('be') emits these keysyms on the unshifted number row, so
     Super+<physical 1..0> only reaches the group bindings when the names match
@@ -224,17 +338,11 @@ def detect_group_names():
     azerty_be = ["ampersand", "eacute", "quotedbl", "apostrophe", "parenleft",
                  "section", "egrave", "exclam", "ccedilla", "agrave",]
     qwerty = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0",]
-    try:
-        out = subprocess.check_output(["setxkbmap", "-query"], text=True)
-        for line in out.splitlines():
-            if line.startswith("layout:") and line.split()[1].split(",")[0] == "be":
-                return azerty_be
-    except Exception:
-        pass
-    return qwerty
+    return azerty_be if layout_code == "be" else qwerty
 
 
-group_names = detect_group_names()
+kb_layout = detect_layout()
+group_names = group_names_for(kb_layout)
 
 # Circle labels from the DTOS design.
 group_labels = ["⬤", "⬤", "⬤", "⬤", "⬤", "⬤", "⬤", "⬤", "⬤", "⬤",]
@@ -315,10 +423,8 @@ extension_defaults = widget_defaults.copy()
 
 
 def tray_widget():
-    if IS_WAYLAND:
-        return widget.StatusNotifier(padding=6)
-    else:
-        return widget.Systray(padding=6)
+    # StatusNotifier is the Wayland tray (widget.Systray is X11-only).
+    return widget.StatusNotifier(padding=6)
 
 
 def init_widgets_list(include_tray=True):
@@ -480,7 +586,7 @@ dgroups_app_rules = []
 main = None
 
 
-# ── Hooks (qtile-erik behaviour: archlinux-logout bar, sxhkd autostart) ───
+# ── Hooks (archlinux-logout bar hide/show, autostart.sh on first start) ───
 # hides the top bar when the archlinux-logout widget is opened
 @hook.subscribe.client_new
 def new_client(window):
@@ -498,22 +604,6 @@ def logout_killed(window):
 @hook.subscribe.startup_once
 def start_once():
     subprocess.call([home + "/.config/qtile/scripts/autostart.sh"])
-
-
-@hook.subscribe.startup
-def start_always():
-    # Set the cursor to something sane in X
-    subprocess.Popen(["xsetroot", "-cursor_name", "left_ptr"])
-
-
-@hook.subscribe.client_new
-def set_floating(window):
-    if (window.window.get_wm_transient_for()
-            or window.window.get_wm_type() in floating_types):
-        window.floating = True
-
-
-floating_types = ["notification", "toolbar", "splash", "dialog"]
 
 
 follow_mouse_focus = True
@@ -556,8 +646,9 @@ reconfigure_screens = True
 # focus, should we respect this or not?
 auto_minimize = True
 
-# When using the Wayland backend, this can be used to configure input devices.
-wl_input_rules = None
+# Wayland input devices: apply the detected keyboard layout to the session
+# (the X11 backend's setxkbmap has no Wayland equivalent).
+wl_input_rules = {"type:keyboard": InputConfig(kb_layout=kb_layout)}
 
 # xcursor theme (string or None) and size (integer) for Wayland backend
 wl_xcursor_theme = None
