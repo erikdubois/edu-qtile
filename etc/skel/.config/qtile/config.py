@@ -255,9 +255,6 @@ keys.extend([
     Key([], "XF86MonBrightnessUp", lazy.spawn("xbacklight -inc 10")),
     Key([], "XF86MonBrightnessDown", lazy.spawn("xbacklight -dec 10")),
 
-    # SYSTEM UPDATE
-    Key(["control", "mod1", "shift"], "F1", lazy.spawn("update-system")),
-    Key([mod, "control", "shift"], "F1", lazy.spawn("update-system")),
     Key([mod, "shift"], "Escape", lazy.spawn("xkill")),
     Key([mod, "shift"], "KP_Enter", lazy.spawn("thunar")),
     Key(["control", "mod1"], "z", lazy.spawn("fastfetch-tweak-tool")),

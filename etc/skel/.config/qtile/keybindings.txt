@@ -1,7 +1,7 @@
 ###############################################################################
 #  KEYBINDINGS — qtile
-#  Source: etc/skel/.config/qtile/config.py + etc/skel/.config/qtile/sxhkd/sxhkdrc
-#  Generated: 2026.06.08 by /kiro-keybindings-all-twms-xfce — DO NOT EDIT BY HAND
+#  Source: etc/skel/.config/qtile/config.py
+#  Generated: 2026.06.30 by /kiro-keybindings-all — DO NOT EDIT BY HAND
 ###############################################################################
 
 ── 1. Applications & Launchers ───────────────────────────────────────────────
@@ -12,13 +12,7 @@
   ctrl + alt + t            alacritty (terminal)
   F12                       alacritty (terminal)
   super + shift + Return    thunar (file manager)
-  super + F8                thunar (file manager)
-  super + r                 rofi drun (themed launcher)
-  super + d                 rofi drun (themed launcher)
-  super + F12               rofi drun
-  super + F11               rofi drun (fullscreen)
-  super + shift + d         dmenu_run
-  super + e                 code (VS Code)
+  super + shift + KP_Enter  thunar (file manager)
   super + F1                vivaldi (browser)
   super + F2                code (VS Code)
   super + F3                inkscape
@@ -26,12 +20,21 @@
   super + F5                meld
   super + F6                vlc
   super + F7                virtualbox
+  super + F8                thunar (file manager)
   super + F9                virt-manager (virtual machine manager)
   super + F10               spotify
+  super + F11               rofi drun (fullscreen)
+  super + F12               rofi drun
+  super + r                 rofi drun (themed launcher)
+  super + d                 rofi drun (themed launcher)
+  super + shift + d         dmenu_run
+  super + e                 code (VS Code)
   super + v                 pavucontrol (audio mixer)
   ctrl + alt + e            archlinux-tweak-tool
   ctrl + alt + a            alacritty-tweak-tool
   ctrl + alt + q            alacritty-tweak-tool
+  ctrl + alt + z            fastfetch-tweak-tool
+  ctrl + alt + w            fastfetch-tweak-tool
   ctrl + alt + d            obs
   ctrl + alt + o            opera
   ctrl + alt + b            brave (browser)
@@ -41,7 +44,8 @@
   ctrl + alt + f            firefox
   ctrl + alt + v            vivaldi (browser)
   ctrl + alt + p            pamac-manager
-  ctrl + alt + s            spotify
+  ctrl + alt + s            fish-tweak-tool
+  ctrl + alt + r            archlinux-betterlockscreen
   ctrl + alt + u            pavucontrol (audio mixer)
   ctrl + alt + ,            mintstick (USB image writer)
   ctrl + alt + m            mintstick (USB image writer)
@@ -100,8 +104,8 @@
   super + shift + Left      move window to previous screen
 
 ── 6. Multimedia & Hardware ───────────────────────────────────────────────────
-  XF86AudioRaiseVolume      volume +10% (amixer)
-  XF86AudioLowerVolume      volume -10% (amixer)
+  XF86AudioRaiseVolume      volume +10% (pamixer)
+  XF86AudioLowerVolume      volume -10% (pamixer)
   XF86AudioMute             toggle mute
   XF86AudioPlay             play / pause (playerctl)
   XF86AudioNext             next track
@@ -118,31 +122,21 @@
   alt + Up                  wallpaper: pause rotation
   alt + Down                wallpaper: resume rotation
   super + ctrl + space      wallpaper: selector
-  alt + shift + n           wallpaper: next + pywal recolor
-  alt + shift + p           wallpaper: previous + pywal recolor
-  alt + shift + f           wallpaper: favorite + pywal recolor
-  alt + shift + t           wallpaper: trash + pywal recolor
-  alt + shift + u           pywal: recolor from current wallpaper
 
 ── 7. Screenshots ─────────────────────────────────────────────────────────────
-  Print                     scrot — full screen, saved to Pictures
-  ctrl + Print              xfce4-screenshooter
-  ctrl + shift + Print      gnome-screenshot (interactive)
-  super + ctrl + Print      flameshot gui (region)
+  Print                     grim — full screen, saved to Pictures
+  ctrl + Print              grim + slurp (region select)
+  ctrl + shift + Print      grim + slurp (region select)
+  super + ctrl + Print      grim + slurp (region select)
 
 ── 8. System & Session ────────────────────────────────────────────────────────
   super + shift + r         restart qtile
   super + shift + t         theme switcher — rofi colour palette picker
   alt + shift + r           reload qtile config (lightweight)
-  super + shift + s         reload sxhkd
   super + x                 archlinux-logout
   ctrl + alt + k            archlinux-logout
   ctrl + alt + l            archlinux-logout
   super + shift + x         edu-powermenu
-  super + Escape            xkill (click a window to force-kill)
+  super + shift + Escape    xkill (click a window to force-kill)
   ctrl + shift + Escape     xfce4-taskmanager
   ctrl + alt + End          btop (in alacritty)
-  super + g                 toggle compositor (fastcompmgr)
-  super + p                 toggle compositor (picom)
-  ctrl + alt + shift + F1   update-system
-  super + ctrl + shift + F1 update-system
