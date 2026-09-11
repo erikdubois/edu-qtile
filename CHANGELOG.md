@@ -1,5 +1,90 @@
 # Changelog
 
+## 2026.09.11
+
+### What Changed
+
+- **Fixed "Qtile does not log in".** Arch `qtile` 0.37.0-1 changed its session files to
+  `Exec=/bin/sh -c "systemctl --user import-environment ...; exec systemctl --user start --wait qtile.service"`.
+  SDDM's `/usr/share/sddm/scripts/Xsession` ends in a bare `exec $@` — word splitting, no `eval` —
+  so the quotes are never processed, `sh -c` receives the literal token `"systemctl` and dies with
+  `unexpected EOF while looking for matching "`. The session lasted under a second and SDDM went
+  straight back to the greeter. `qtile.service` never started, so nothing appeared in the journal,
+  which is why it looked like nothing happened at all.
+- **The fix now ships with the package** as `kiro-qtile-fix-session` plus a pacman hook, so it is
+  re-applied after every `qtile` upgrade instead of being a hand-edit that the next upgrade undoes.
+- **The Wayland session entry is hidden** (`NoDisplay=true`), the same treatment `kiro-xfce` gives
+  `xfce-wayland.desktop`. This also removes the second, indistinguishable `Name=Qtile` row that
+  SDDM was showing.
+- **Restored the X11 config.** Commit `b233ae3` (2026-06-17) converted this repo from X11 to
+  Wayland — its own entry opens with *"The repo was a byte-for-byte copy of the X11 kiro-qtile"*,
+  so that pass was written for a `kiro-qtile-wayland` repo and landed here. Kiro ships qtile on
+  X11, so the package has been handing X11 users Wayland-only tooling: `grim`/`slurp` screenshots,
+  a `swaybg` wallpaper, a `StatusNotifier` tray and no compositor. All of that is back on X11
+  tooling.
+- **Keybindings stay native.** sxhkd is not coming back — qtile binds keys itself, `keybindings.txt`
+  already documents the native set, and the last two passes maintained the bindings in `config.py`.
+  Both READMEs said otherwise and have been corrected.
+- **The `depends=()` list is no longer just `qtile`**, matching how `ohmychadwm` declares its
+  runtime set, so a fresh install actually gets the tools the config calls.
+
+> **The Wayland qtile session is now non-functional, not merely hidden.** `wl_input_rules` /
+> `InputConfig` are gone and the tray is `widget.Systray`, which is X11-only — un-setting
+> `NoDisplay=true` will not give anyone a working session. Reviving Wayland means a new
+> `kiro-qtile-wayland` repo seeded from commit `c8513ca`, which is where the Wayland variant is
+> preserved.
+
+### Technical Details
+
+- `usr/bin/kiro-qtile-fix-session`: POSIX `sh`. Rewrites the `Exec=` line of
+  `/usr/share/xsessions/qtile.desktop` to `Exec=qtile start -b x11`, anchored on `^Exec=` rather
+  than on upstream's current wrapper so it keeps working if the wrapper changes again. Appends
+  `NoDisplay=true` to the Wayland entry unless already present. The Wayland file being absent is
+  fine (`exit 0`); the xsessions file being absent prints to stderr and exits non-zero, so a
+  silent revert to the broken session cannot happen unnoticed. Verified idempotent.
+- `usr/share/libalpm/hooks/kiro-qtile-fix-session.hook`: `Install`/`Upgrade`, `Type = Path`,
+  targets both `qtile.desktop` paths, `PostTransaction`. `readme.install` also calls the script
+  from `post_install`/`post_upgrade`, because a hook only fires when one of its target paths is in
+  the transaction — installing `kiro-qtile` onto a box that already has `qtile` would otherwise
+  miss it.
+- `config.py`: dropped `from libqtile.backend.wayland import InputConfig` and the
+  `wl_input_rules` / `wl_xcursor_theme` / `wl_xcursor_size` block; `detect_layout()` reads
+  `setxkbmap -query` again (the live X server, which is what the AZERTY group keysyms must match)
+  instead of `localectl`; `tray_widget()` returns `widget.Systray` again, which drops the
+  `python-dbus-fast` requirement; restored the `@hook.subscribe.startup` cursor hook
+  (`xsetroot -cursor_name left_ptr`); screenshots follow the ohmychadwm house pattern —
+  `Print` → `scrot` into Pictures, `ctrl+Print` → `xfce4-screenshooter`,
+  `ctrl+shift+Print` → `gnome-screenshot -i`, `super+ctrl+Print` → `flameshot gui`.
+- `scripts/autostart.sh`: kept the current `run()` helper and section dividers, swapped `swaybg`
+  for `feh --bg-fill` plus `variety`, and added `fastcompmgr -c` and `numlockx on`. The
+  `$HOME/.screenlayout/erik.sh` block from the old X11 version was deliberately not restored — a
+  personal filename does not belong in `/etc/skel`.
+- PKGBUILD: added a `_destname2="/usr/"` copy step so the hook and script ship; merged the two
+  competing `conflicts=()` lines (the second silently overrode the first, dropping
+  `cachyos-qtile-settings`); `pkgver`/`pkgrel` left alone, `build.sh` bumps them.
+- Verified on picard: config loads clean under qtile 0.37.0 / Python 3.14 with no
+  `StatusNotifier` dependency warning, `ruff check` matches the pre-change baseline exactly
+  (13 pre-existing findings, none new), `codespell` clean, both shell scripts pass `-n`.
+
+### Files Modified
+
+- `etc/skel/.config/qtile/config.py`
+- `etc/skel/.config/qtile/scripts/autostart.sh`
+- `etc/skel/.config/qtile/keybindings.txt`
+- `etc/skel/.config/qtile/README.md`
+- `README.md`
+- `KIRO-PKG-BUILD-APPS/kiro-qtile/PKGBUILD` (separate repo)
+- `KIRO-PKG-BUILD-APPS/kiro-qtile/readme.install` (separate repo)
+
+### Files Added
+
+- `usr/bin/kiro-qtile-fix-session`
+- `usr/share/libalpm/hooks/kiro-qtile-fix-session.hook`
+
+### Files Removed
+
+- `wayland-deps.sh`
+
 ## 2026.06.30
 
 ### What Changed

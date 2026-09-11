@@ -1,11 +1,10 @@
 #!/bin/bash
 # =============================================================================
-# autostart.sh — qtile (Wayland) session startup script
+# autostart.sh — qtile (X11) session startup script
 #
 # Called BY qtile from the startup hook in config.py (not by the display
 # manager directly), so it has NO window-manager loop — it just starts the
-# background services and exits. qtile is the Wayland compositor itself, so
-# there is no external compositor (picom) and no xrandr screen layout here.
+# background services and exits.
 #
 # To autostart your own apps, add:  run "your-app"
 # To stop an autostart entry, comment it out with #
@@ -20,6 +19,9 @@ run() {
   fi
 }
 
+# ── Compositor ────────────────────────────────────────────────────────────────
+run fastcompmgr -c                                   # Transparency and shadows
+
 # ── System tray applets ───────────────────────────────────────────────────────
 run nm-applet                                        # NetworkManager wifi/eth tray
 run pamac-tray                                       # Arch package manager tray
@@ -31,7 +33,11 @@ run /usr/lib/polkit-gnome/polkit-gnome-authentication-agent-1  # Polkit auth pop
 # ── Volume control ────────────────────────────────────────────────────────────
 run volctl                                           # PipeWire/PulseAudio volume tray
 
+# ── Keyboard ──────────────────────────────────────────────────────────────────
+numlockx on &                                        # Numpad on at login
+
 # ── Wallpaper ─────────────────────────────────────────────────────────────────
-# swaybg is the wlroots layer-shell wallpaper tool (feh is X11-only and does not
-# work on Wayland). Sets the default Kiro wallpaper, scaled to fill.
-run swaybg -i /usr/share/backgrounds/kiro/kiro-wallpaper.jpg -m fill
+# feh paints the default Kiro wallpaper once; variety then takes over the
+# rotation (alt+n / alt+p and friends are bound in config.py).
+feh --bg-fill /usr/share/backgrounds/kiro/kiro-wallpaper.jpg &
+run variety                                          # Wallpaper changer

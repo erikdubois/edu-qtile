@@ -2,16 +2,16 @@
   <img src="kiro.jpg" alt="Kiro" width="220" />
 </p>
 
-# kiro-qtile-wayland
+# kiro-qtile
 
-Educational / tutorial repository for [Qtile](https://qtile.org/) on **Wayland** — Qtile is a fully-Python tiling window manager, configurable and extensible in Python, that ships its own wlroots-based Wayland compositor. This is the Wayland variant of [`kiro-qtile`](https://github.com/kirodubes/kiro-qtile) (X11). Part of the `~/EDU/` learning series.
+Educational / tutorial repository for [Qtile](https://qtile.org/) — a fully-Python tiling window manager, configurable and extensible in Python. This is the **X11** configuration Kiro ships. Part of the `~/EDU/` learning series.
 
 ## What's in this repo
 
 - `etc/skel/` — Qtile user config that lands in `/etc/skel/`.
 - `setup.sh`, `up.sh`, `cleanup.sh` — standard EDU bash scaffold.
 
-On Wayland, Qtile *is* the compositor — there is no external compositor (picom) and no sxhkd. All keybindings are native Qtile `Key()` bindings in `config.py`; screenshots use `grim` + `slurp`, brightness uses `brightnessctl`, and the wallpaper is set with `swaybg`.
+All keybindings are native Qtile `Key()` bindings in `config.py` — Qtile binds keys itself, so there is no sxhkd config to keep in sync. Screenshots use `scrot` / `xfce4-screenshooter` / `gnome-screenshot` / `flameshot`, brightness uses `xbacklight`, the wallpaper is set with `feh` and rotated by `variety`, and `fastcompmgr` provides transparency and shadows.
 
 ## Keybindings
 
@@ -29,20 +29,16 @@ Server = https://erikdubois.github.io/$repo/$arch
 
 ```bash
 sudo pacman -Syu
-sudo pacman -S kiro-qtile-wayland
+sudo pacman -S kiro-qtile
 ```
 
-You'll also need Qtile with its Wayland backend and the Wayland helper tools this config calls:
-
-```bash
-sudo pacman -S qtile grim slurp swaybg brightnessctl
-```
+The package pulls in Qtile and the helper tools this config calls, so there is nothing else to install by hand.
 
 ### Manual
 
 ```bash
-git clone https://github.com/kirodubes/kiro-qtile-wayland.git
-cd kiro-qtile-wayland
+git clone https://github.com/kirodubes/kiro-qtile.git
+cd kiro-qtile
 sudo cp -r etc/skel/. /etc/skel/
 ```
 

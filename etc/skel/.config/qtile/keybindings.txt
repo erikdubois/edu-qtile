@@ -124,10 +124,10 @@
   super + ctrl + space      wallpaper: selector
 
 ── 7. Screenshots ─────────────────────────────────────────────────────────────
-  Print                     grim — full screen, saved to Pictures
-  ctrl + Print              grim + slurp (region select)
-  ctrl + shift + Print      grim + slurp (region select)
-  super + ctrl + Print      grim + slurp (region select)
+  Print                     scrot — full screen, saved to Pictures
+  ctrl + Print              xfce4-screenshooter
+  ctrl + shift + Print      gnome-screenshot (interactive)
+  super + ctrl + Print      flameshot gui
 
 ── 8. System & Session ────────────────────────────────────────────────────────
   super + shift + r         restart qtile

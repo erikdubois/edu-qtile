@@ -24,17 +24,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Kiro qtile config (Wayland):
+# Kiro qtile config (X11):
 #   - Visual design (DoomOne colours, bar, widgets) follows the DTOS/CachyOS qtile.
-#   - All keybindings are native qtile Key() bindings. sxhkd does not run on
-#     Wayland, so the application/multimedia/screenshot launchers that used to
-#     live in sxhkd/sxhkdrc are ported into the `keys` list below.
+#   - All keybindings are native qtile Key() bindings. qtile binds keys itself,
+#     so the application/multimedia/screenshot launchers live in the `keys` list
+#     below rather than in an sxhkd config.
 
 import os
 import subprocess
 
 from libqtile import bar, hook, layout, qtile, widget
-from libqtile.backend.wayland import InputConfig
 from libqtile.config import Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 
@@ -48,11 +47,10 @@ home = os.path.expanduser("~")
 
 myTerm = "alacritty"
 
-# Wayland screenshot helpers (grim + slurp; replace X11 scrot/flameshot).
-_shot_full = ('bash -c \'grim "$(xdg-user-dir PICTURES)/'
-              '$(date +%Y-%m-%d-%H%M%S)_screenshot.png"\'')
-_shot_region = ('bash -c \'grim -g "$(slurp)" "$(xdg-user-dir PICTURES)/'
-                '$(date +%Y-%m-%d-%H%M%S)_screenshot.png"\'')
+# Full-screen shot, saved straight to the user's Pictures directory. scrot hands
+# the -e string to /bin/sh, which is what expands $f and $(xdg-user-dir ...).
+_shot_full = ("scrot 'Kiro-%Y-%m-%d-%s_screenshot_$wx$h.jpg' "
+              "-e 'mv $f $(xdg-user-dir PICTURES)'")
 
 # ── Keybindings ───────────────────────────────────────────────────────────
 # Window-management bindings live in this list; the application / multimedia /
@@ -238,11 +236,11 @@ keys.extend([
     # CONTROL + SHIFT KEYS
     Key(["control", "shift"], "Escape", lazy.spawn("xfce4-taskmanager")),
 
-    # SCREENSHOTS (grim + slurp)
+    # SCREENSHOTS
     Key([], "Print", lazy.spawn(_shot_full)),
-    Key(["control"], "Print", lazy.spawn(_shot_region)),
-    Key(["control", "shift"], "Print", lazy.spawn(_shot_region)),
-    Key(["control", mod], "Print", lazy.spawn(_shot_region)),
+    Key(["control"], "Print", lazy.spawn("xfce4-screenshooter")),
+    Key(["control", "shift"], "Print", lazy.spawn("gnome-screenshot -i")),
+    Key(["control", mod], "Print", lazy.spawn("flameshot gui")),
 
     # MULTIMEDIA KEYS
     Key([], "XF86AudioRaiseVolume", lazy.spawn("pamixer -i 10")),
@@ -325,16 +323,16 @@ def drag_window(qtile, x, y):
 groups = []
 
 def detect_layout():
-    """Return the configured keyboard layout code (e.g. 'be', 'us').
+    """Return the active keyboard layout code (e.g. 'be', 'us').
 
-    Wayland has no setxkbmap; localectl is the systemd-native, backend-agnostic
-    source. Falls back to 'us' on any error.
+    setxkbmap reports what the running X server actually has loaded, which is
+    what the group bindings below have to match. Falls back to 'us' on any error.
     """
     try:
-        out = subprocess.check_output(["localectl", "status"], text=True)
+        out = subprocess.check_output(["setxkbmap", "-query"], text=True)
         for line in out.splitlines():
-            if "X11 Layout:" in line:
-                return line.split(":", 1)[1].strip().split(",")[0]
+            if line.startswith("layout:"):
+                return line.split()[1].split(",")[0]
     except Exception:
         pass
     return "us"
@@ -435,8 +433,7 @@ extension_defaults = widget_defaults.copy()
 
 
 def tray_widget():
-    # StatusNotifier is the Wayland tray (widget.Systray is X11-only).
-    return widget.StatusNotifier(padding=6)
+    return widget.Systray(padding=6)
 
 
 def init_widgets_list(include_tray=True):
@@ -618,6 +615,12 @@ def start_once():
     subprocess.call([home + "/.config/qtile/scripts/autostart.sh"])
 
 
+@hook.subscribe.startup
+def start_always():
+    # X leaves the root cursor as the default X shape until something sets it
+    subprocess.Popen(["xsetroot", "-cursor_name", "left_ptr"])
+
+
 follow_mouse_focus = True
 bring_front_click = False
 floats_kept_above = True
@@ -657,14 +660,6 @@ reconfigure_screens = True
 # If things like steam games want to auto-minimize themselves when losing
 # focus, should we respect this or not?
 auto_minimize = True
-
-# Wayland input devices: apply the detected keyboard layout to the session
-# (the X11 backend's setxkbmap has no Wayland equivalent).
-wl_input_rules = {"type:keyboard": InputConfig(kb_layout=kb_layout)}
-
-# xcursor theme (string or None) and size (integer) for Wayland backend
-wl_xcursor_theme = None
-wl_xcursor_size = 24
 
 # XXX: Gasp! We're lying here. In fact, nobody really uses or cares about this
 # string besides java UI toolkits; you can see several discussions on the
